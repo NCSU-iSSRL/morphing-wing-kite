@@ -1,0 +1,27 @@
+clear;clc;
+load aggregateData.mat
+runs = struct2table(runs);
+wingProfiles = unique(runs.wingProfile)';
+
+figure(61)
+clf
+
+runs.lap1AveV(runs.lap1AveV > 0.8) = 0.81;
+runs.lap1AveV(runs.lap1AveV < 0.8) = 0.75;
+
+plotColors = 'rgbkc';
+for q = 1%:length(wingProfiles)
+    expResults = [];
+    inds = runs.wingProfile == wingProfiles(q) & runs.ailBias == 0; % indices of runs with current wing profile and no aileron bias
+    elevDefls = unique(runs.elvDefl(inds))'; % elevator deflections for current wing prof. with no ail bias
+    for elev = elevDefls
+        runInds = runs.elvDefl == elev & inds; % runs for current elevator deflection and wing profile w/ no ail. bias
+        expData = [runs.lap1AveT(runInds); runs.lap2AveT(runInds)]/2/0.75^2;
+        totalLaps = length(expData);
+        expResults(end+1,:) = [elev, mean(expData), std(expData)/sqrt(totalLaps)]; % elevator deflection, mean of data, standard error of data
+    end
+    errorbar(expResults(:,1), expResults(:,2), expResults(:,3), [plotColors(q)], ...
+        'DisplayName', sprintf('Experimental -- Wing profile = %d', wingProfiles(q)))
+    hold on
+end
+grid on
